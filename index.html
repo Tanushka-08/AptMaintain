@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AptMaintain - Housing Society Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles.css" />
+  <script>
+    // Apply saved preferences before page paint to eliminate flash
+    (function () {
+      var p = {};
+      try { p = JSON.parse(localStorage.getItem('apt-prefs')) || {}; } catch (e) {}
+      var t = p.theme || 'system';
+      var dark = t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+      var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var anim = p.animations === undefined ? !reduced : p.animations;
+      document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');
+      if (!anim) document.documentElement.classList.add('no-anim');
+    })();
+  </script>
+</head>
+<body>
+  <!-- Ambient Fluid Aura & Precision Dot Cursor -->
+  <div id="cursor-aura"></div>
+  <div id="cursor-dot"></div>
+  <div id="cursor-ripple"></div>
+
+  <nav class="navbar navbar-expand-lg app-nav sticky-top">
+    <div class="container">
+      <a class="navbar-brand brand" href="/"><span class="brand-mark"></span>AptMaintain</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="nav">
+        <ul class="navbar-nav ms-auto align-items-lg-center">
+          <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="/bills">Bills</a></li>
+          <li class="nav-item"><a class="nav-link" href="/raise-ticket">Raise Ticket</a></li>
+          <li class="nav-item"><a class="nav-link" href="/tickets">Tickets</a></li>
+          <li class="nav-item ms-lg-3 my-2 my-lg-0">
+            <button id="theme-toggle" class="btn btn-outline-primary icon-btn" type="button" aria-label="Switch light or dark theme">
+              <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+              <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+            </button>
+          </li>
+          <li class="nav-item dropdown ms-lg-2">
+            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">Preferences</button>
+            <div class="dropdown-menu dropdown-menu-end p-3 shadow" style="min-width: 250px">
+              <div class="small text-uppercase text-body-secondary fw-semibold mb-2">Theme Mode</div>
+              <div class="btn-group w-100 mb-3" role="group">
+                <input type="radio" class="btn-check" name="theme" id="t-light" value="light" /><label class="btn btn-sm btn-outline-primary" for="t-light">Light</label>
+                <input type="radio" class="btn-check" name="theme" id="t-dark" value="dark" /><label class="btn btn-sm btn-outline-primary" for="t-dark">Dark</label>
+                <input type="radio" class="btn-check" name="theme" id="t-system" value="system" /><label class="btn btn-sm btn-outline-primary" for="t-system">Auto</label>
+              </div>
+              <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="pref-anim" />
+                <label class="form-check-label" for="pref-anim">Smooth Animations</label>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="pref-cursor" />
+                <label class="form-check-label" for="pref-cursor">Ambient Glow Cursor</label>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div id="home-only">
+    <!-- Hero with Floating Aurora Mesh -->
+    <header class="hero">
+      <div class="aurora-mesh">
+        <div class="aurora-orb aurora-1"></div>
+        <div class="aurora-orb aurora-2"></div>
+        <div class="aurora-orb aurora-3"></div>
+      </div>
+      <div class="container">
+        <span class="pill fade-up"><i></i>Co-operative Housing Society Portal</span>
+        <h1 class="display-4 fw-bold my-4 fade-up" style="--d: .1s">
+          Maintenance bills &amp; service tickets,<br /><span class="gradient-text">effortlessly streamlined.</span>
+        </h1>
+        <p class="lead text-body-secondary mx-auto mb-4 fade-up" style="--d: .2s; max-width: 680px">
+          Compute society dues with late penalty rules, report plumbing, electrical, elevator or security tickets, and monitor resolution in real-time.
+        </p>
+        <div class="fade-up mb-4" style="--d: .3s">
+          <a href="#register" class="btn btn-primary btn-lg me-2">Register as Resident</a>
+          <a href="/raise-ticket" class="btn btn-outline-primary btn-lg">Raise a Ticket</a>
+        </div>
+        <div class="d-flex flex-wrap justify-content-center gap-2 fade-up" style="--d: .38s">
+          <span class="society-stat-pill"><span class="live-dot"></span>24/7 Society Desk</span>
+          <span class="society-stat-pill"><span class="live-dot"></span>Instant Ticket Dispatch</span>
+          <span class="society-stat-pill"><span class="live-dot"></span>Transparent Billing Math</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Resident Registration Form (Exp 1 Regex Validation) -->
+    <section id="register" class="container mb-5">
+      <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+          <div class="card shadow-sm fade-up hover-lift">
+            <div class="card-body p-4 p-md-5">
+              <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="badge category-badge">Exp 1 Verified</span>
+                <h3 class="card-title mb-0 fw-bold">Resident Registration</h3>
+              </div>
+              <p class="text-body-secondary small mb-3">Register your flat profile to submit maintenance tickets and access bill calculation logs.</p>
+              <div id="reg-alert"></div>
+              <form id="reg-form" novalidate>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold" for="name">Full Name</label>
+                  <input class="form-control" id="name" placeholder="e.g. Ramesh Sharma" required minlength="3" />
+                  <div class="invalid-feedback">Enter your full name (min 3 characters).</div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold" for="email">Email Address</label>
+                  <input type="email" class="form-control" id="email" placeholder="e.g. resident@aptmaintain.com" required />
+                  <div class="invalid-feedback">Enter a valid email address (e.g. name@domain.com).</div>
+                </div>
+                <div class="row">
+                  <div class="col-6 mb-3">
+                    <label class="form-label fw-semibold" for="flatNo">Flat No</label>
+                    <input class="form-control" id="flatNo" placeholder="e.g. 101" required maxlength="6" />
+                    <div class="invalid-feedback">Enter flat number (alphanumeric/hyphen, max 6 chars).</div>
+                  </div>
+                  <div class="col-6 mb-3">
+                    <label class="form-label fw-semibold" for="wing">Wing</label>
+                    <input class="form-control text-uppercase" id="wing" placeholder="e.g. A" required maxlength="1" />
+                    <div class="invalid-feedback">Enter single uppercase wing letter (A-Z).</div>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold" for="mobile">Mobile Number</label>
+                  <input class="form-control" id="mobile" placeholder="10-digit Indian mobile" required />
+                  <div class="invalid-feedback">Enter a valid 10-digit mobile number starting with 6-9.</div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold" for="password">Password</label>
+                  <input type="password" class="form-control" id="password" placeholder="At least 6 characters" required />
+                  <div class="invalid-feedback">Password must be at least 6 characters.</div>
+                </div>
+                <button class="btn btn-primary w-100 py-2 fw-semibold" id="reg-btn" type="submit">Create Resident Account</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <main id="root" class="container my-4"></main>
+  <footer class="text-center text-body-secondary py-4 border-top">
+    <div class="container small">
+      <strong>AptMaintain</strong> - Co-operative Housing Society Management &amp; Service Ticket Portal &copy; 2026
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.2/dist/axios.min.js"></script>
+  <script>
+    // ---------- preferences: theme, animations, ambient cursor ----------
+    (function () {
+      var $ = function (id) { return document.getElementById(id); };
+      var root = document.documentElement;
+      var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+      var dq = matchMedia('(prefers-color-scheme: dark)');
+      var prefs = {};
+      try { prefs = JSON.parse(localStorage.getItem('apt-prefs')) || {}; } catch (e) {}
+      function save() { try { localStorage.setItem('apt-prefs', JSON.stringify(prefs)); } catch (e) {} }
+      function isDark() { var t = prefs.theme || 'system'; return t === 'dark' || (t === 'system' && dq.matches); }
+      function apply() {
+        var anim = prefs.animations === undefined ? !reduced : prefs.animations;
+        var cur = (prefs.cursor === undefined ? true : prefs.cursor) && fine;
+        root.setAttribute('data-bs-theme', isDark() ? 'dark' : 'light');
+        root.classList.toggle('no-anim', !anim);
+        root.classList.toggle('custom-cursor', cur);
+        $('t-' + (prefs.theme || 'system')).checked = true;
+        $('pref-anim').checked = anim;
+        $('pref-cursor').checked = cur;
+        $('pref-cursor').disabled = !fine;
+      }
+      document.querySelectorAll('input[name=theme]').forEach(function (r) {
+        r.addEventListener('change', function () { prefs.theme = r.value; save(); apply(); });
+      });
+      $('pref-anim').addEventListener('change', function (e) { prefs.animations = e.target.checked; save(); apply(); });
+      $('pref-cursor').addEventListener('change', function (e) { prefs.cursor = e.target.checked; save(); apply(); });
+      $('theme-toggle').addEventListener('click', function () {
+        var btn = this;
+        prefs.theme = isDark() ? 'light' : 'dark'; save(); apply();
+        btn.classList.add('spin'); setTimeout(function () { btn.classList.remove('spin'); }, 550);
+      });
+      dq.addEventListener('change', apply);
+      apply();
+
+      // Show home section only on "/" and highlight active navbar link
+      document.getElementById('home-only').style.display = location.pathname === '/' ? '' : 'none';
+      document.querySelectorAll('#nav .nav-link').forEach(function (a) {
+        a.classList.toggle('active', a.getAttribute('href') === location.pathname);
+      });
+
+      // ---------- Fluid Ambient Glow Cursor & Micro-Interactions ----------
+      var aura = $('cursor-aura');
+      var dot = $('cursor-dot');
+      var ripple = $('cursor-ripple');
+      var mx = -100, my = -100;
+      var ax = -100, ay = -100;
+      var isMoving = false;
+
+      document.addEventListener('mousemove', function (e) {
+        mx = e.clientX;
+        my = e.clientY;
+        if (!isMoving) {
+          isMoving = true;
+          root.classList.add('cursor-active');
+        }
+        dot.style.transform = 'translate3d(' + mx + 'px, ' + my + 'px, 0) translate(-50%, -50%)';
+
+        var target = e.target;
+        var isInput = !!target.closest('input:not([type=radio]):not([type=checkbox]), textarea');
+        var isInteractive = !!target.closest('a, button, select, label, .btn, .hover-lift, .nav-link, .card');
+
+        aura.classList.toggle('text-focus', isInput);
+        aura.classList.toggle('hover', !isInput && isInteractive);
+      });
+
+      document.addEventListener('mousedown', function (e) {
+        aura.classList.add('active-press');
+        if (ripple) {
+          ripple.style.transform = 'translate3d(' + e.clientX + 'px, ' + e.clientY + 'px, 0) translate(-50%, -50%)';
+          ripple.classList.remove('animate-ripple');
+          void ripple.offsetWidth; // force reflow
+          ripple.classList.add('animate-ripple');
+        }
+      });
+
+      document.addEventListener('mouseup', function () {
+        aura.classList.remove('active-press');
+      });
+
+      document.addEventListener('mouseleave', function () {
+        root.classList.remove('cursor-active');
+        isMoving = false;
+      });
+
+      // Smooth spring lerp animation for aura trailing
+      (function renderLoop() {
+        ax += (mx - ax) * 0.16;
+        ay += (my - ay) * 0.16;
+        aura.style.transform = 'translate3d(' + ax + 'px, ' + ay + 'px, 0) translate(-50%, -50%)';
+        requestAnimationFrame(renderLoop);
+      })();
+    })();
+
+    // ---------- Resident Registration (Exp 1 Regex Validation) ----------
+    var MOBILE_REGEX = /^[6-9]\d{9}$/;
+    var FLAT_REGEX = /^[A-Za-z0-9-]{1,6}$/;
+    var WING_REGEX = /^[A-Za-z]$/;
+    var EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+    var form = document.getElementById('reg-form');
+    var alertBox = document.getElementById('reg-alert');
+    var regBtn = document.getElementById('reg-btn');
+    var $$ = function (id) { return document.getElementById(id); };
+
+    function setValid(el, ok) {
+      el.classList.toggle('is-invalid', !ok);
+      el.classList.toggle('is-valid', ok);
+      return ok;
+    }
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var checks = [
+        setValid($$('name'), $$('name').value.trim().length >= 3),
+        setValid($$('email'), EMAIL_REGEX.test($$('email').value.trim())),
+        setValid($$('flatNo'), FLAT_REGEX.test($$('flatNo').value.trim())),
+        setValid($$('wing'), WING_REGEX.test($$('wing').value.trim())),
+        setValid($$('mobile'), MOBILE_REGEX.test($$('mobile').value.trim())),
+        setValid($$('password'), $$('password').value.length >= 6),
+      ];
+      if (checks.includes(false)) return;
+
+      regBtn.disabled = true;
+      regBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registering...';
+      try {
+        var res = await axios.post('/api/residents', {
+          name: $$('name').value.trim(),
+          email: $$('email').value.trim().toLowerCase(),
+          flatNo: $$('flatNo').value.trim(),
+          wing: $$('wing').value.trim().toUpperCase(),
+          mobile: $$('mobile').value.trim(),
+          password: $$('password').value,
+        });
+        alertBox.innerHTML = '<div class="alert alert-success d-flex align-items-center"><span>✔ ' + res.data.message + '</span></div>';
+        form.reset();
+        form.querySelectorAll('.is-valid').forEach(function (el) { el.classList.remove('is-valid'); });
+      } catch (err) {
+        var msg = (err.response && err.response.data && err.response.data.message) || 'Registration failed. Backend unreachable.';
+        alertBox.innerHTML = '<div class="alert alert-danger d-flex align-items-center"><span>❌ ' + msg + '</span></div>';
+      }
+      regBtn.disabled = false;
+      regBtn.textContent = 'Create Resident Account';
+    });
+  </script>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
